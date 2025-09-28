@@ -1,10 +1,3 @@
--- =========================
--- Roblox Executor Webhook + Join Link
--- Compatible: Delta / Synapse / KRNL / Fluxus (jika executor support request)
--- GANTI WEBHOOK_URL dengan Discord webhook-mu
--- Jalankan di client/executor (bukan ServerScriptService)
--- =========================
-
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1414247725259821172/c9k-3kUbH1aUE5XOWP1yvaw-InLrXRjhb0ftcZW1fuFYqxLfcCJbp9ml0Y6OagZgDS6P" -- <- ganti
 
 local HttpService = game:GetService("HttpService")
@@ -29,13 +22,12 @@ if plr then
 end
 
 -- JobId (server instance)
-local jobId
+local jobId = "Unknown"
 pcall(function()
-    jobId = tostring(game.JobId)
+    if game.JobId and tostring(game.JobId) ~= "" then
+        jobId = tostring(game.JobId)
+    end
 end)
-if not jobId or jobId == "" then
-    jobId = nil
-end
 
 -- Deteksi executor
 local function detect_executor()
@@ -67,24 +59,6 @@ pcall(function()
     end
 end)
 
--- Join links
-local placeId = tostring(game.PlaceId or "0")
-local joinLinks = {}
-if jobId then
-    table.insert(joinLinks, ("https://www.roblox.com/games/start?placeId=%s&gameId=%s"):format(placeId, jobId))
-    table.insert(joinLinks, ("https://www.roblox.com/home?placeId=%s&gameId=%s"):format(placeId, jobId))
-    table.insert(joinLinks, ("https://www.roblox.com/games/%s?serverJobId=%s"):format(placeId, jobId))
-else
-    table.insert(joinLinks, ("https://www.roblox.com/games/%s"):format(placeId))
-    table.insert(joinLinks, ("https://www.roblox.com/games/start?placeId=%s"):format(placeId))
-end
-
-local joinLinksText = ""
-for i, l in ipairs(joinLinks) do
-    joinLinksText = joinLinksText .. ("[%s](%s)"):format((i==1 and "Join Server (var.1)" or ("Join Server (var."..i..")")), l)
-    if i < #joinLinks then joinLinksText = joinLinksText .. "\n" end
-end
-
 -- Embed
 local embed = {
     title = "Script Executed",
@@ -94,15 +68,15 @@ local embed = {
         { name = "Display Name", value = tostring(displayName), inline = true },
         { name = "UserId", value = tostring(playerId), inline = true },
         { name = "Executor", value = tostring(executorName), inline = true },
-        { name = "PlaceId", value = tostring(placeId), inline = true },
+        { name = "PlaceId", value = tostring(game.PlaceId or "Unknown"), inline = true },
         { name = "Game Name", value = tostring(placeName), inline = false },
-        { name = "Join Link(s)", value = joinLinksText, inline = false }
+        { name = "JobId", value = tostring(jobId), inline = false }
     },
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 }
 
 local payload_table = {
-    content = ("Script executed by: %s (ID: %s) — Executor: %s"):format(playerName, playerId, executorName),
+    content = ("Script executed by: %s (ID: %s) — Executor: %s — JobId: %s"):format(playerName, playerId, executorName, jobId),
     embeds = { embed }
 }
 local body = HttpService:JSONEncode(payload_table)
@@ -137,7 +111,7 @@ end
 if plr then
     plr.CharacterAdded:Connect(function()
         local minimal = {
-            content = ("Player %s (ID: %s) respawned — Executor: %s — Join: %s"):format(playerName, playerId, executorName, (joinLinks[1] or "N/A"))
+            content = ("Player %s (ID: %s) respawned — Executor: %s — JobId: %s"):format(playerName, playerId, executorName, jobId)
         }
         local body2 = HttpService:JSONEncode(minimal)
         try_send({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body2 })
