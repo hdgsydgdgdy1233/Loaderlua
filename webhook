@@ -1,4 +1,4 @@
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1414247725259821172/c9k-3kUbH1aUE5XOWP1yvaw-InLrXRjhb0ftcZW1fuFYqxLfcCJbp9ml0Y6OagZgDS6P" -- <- ganti
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1414247725259821172/c9k-3kUbH1aUE5XOWP1yvaw-InLrXRjhb0ftcZW1fuFYqxLfcCJbp9ml0Y6OagZgDS6P" -- <- ganti jika perlu
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -59,24 +59,24 @@ pcall(function()
     end
 end)
 
--- Embed
+-- Embed dengan warna acak dan triple backticks
 local embed = {
     title = "Script Executed",
-    color = 15749237,
+    color = math.random(0, 16777215), -- Warna acak
     fields = {
-        { name = "Player Name", value = tostring(playerName), inline = true },
-        { name = "Display Name", value = tostring(displayName), inline = true },
-        { name = "UserId", value = tostring(playerId), inline = true },
-        { name = "Executor", value = tostring(executorName), inline = true },
-        { name = "PlaceId", value = tostring(game.PlaceId or "Unknown"), inline = true },
-        { name = "Game Name", value = tostring(placeName), inline = false },
-        { name = "JobId", value = tostring(jobId), inline = false }
+        { name = "Player Name", value = "```"..tostring(playerName).."```", inline = true },
+        { name = "Display Name", value = "```"..tostring(displayName).."```", inline = true },
+        { name = "UserId", value = "```"..tostring(playerId).."```", inline = true },
+        { name = "Executor", value = "```"..tostring(executorName).."```", inline = true },
+        { name = "PlaceId", value = "```"..tostring(game.PlaceId or "Unknown").."```", inline = true },
+        { name = "Game Name", value = "```"..tostring(placeName).."```", inline = false },
+        { name = "JobId", value = "```"..tostring(jobId).."```", inline = false }
     },
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 }
 
 local payload_table = {
-    content = ("Script executed by: %s (ID: %s) — Executor: %s — JobId: %s"):format(playerName, playerId, executorName, jobId),
+    content = ("```Script executed by: %s (ID: %s) — Executor: %s — JobId: %s```"):format(playerName, playerId, executorName, jobId),
     embeds = { embed }
 }
 local body = HttpService:JSONEncode(payload_table)
@@ -92,7 +92,7 @@ local function try_send(opts)
     return false,"No supported request function"
 end
 
--- Kirim webhook
+-- Kirim webhook awal (saat script dijalankan)
 local ok, res = try_send({
     Url = WEBHOOK_URL,
     Method = "POST",
@@ -101,19 +101,8 @@ local ok, res = try_send({
 })
 
 if ok then
-    print("Webhook terkirim. Executor:", executorName)
+
 else
     warn("Gagal kirim webhook:", res)
     print(body)
-end
-
--- Respawn event
-if plr then
-    plr.CharacterAdded:Connect(function()
-        local minimal = {
-            content = ("Player %s (ID: %s) respawned — Executor: %s — JobId: %s"):format(playerName, playerId, executorName, jobId)
-        }
-        local body2 = HttpService:JSONEncode(minimal)
-        try_send({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body2 })
-    end)
 end
