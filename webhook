@@ -75,10 +75,11 @@ local embed = {
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 }
 
+-- Payload hanya embed, tanpa content
 local payload_table = {
-    content = ("```Script executed by: %s (ID: %s) — Executor: %s — JobId: %s```"):format(playerName, playerId, executorName, jobId),
     embeds = { embed }
 }
+
 local body = HttpService:JSONEncode(payload_table)
 
 -- Request wrapper
@@ -101,8 +102,26 @@ local ok, res = try_send({
 })
 
 if ok then
-
+    print("Webhook terkirim. Executor:", executorName)
 else
     warn("Gagal kirim webhook:", res)
     print(body)
 end
+
+-- Respawn event (DINONAKTIFKAN)
+-- Jika mau menghapus pesan respawn, biarkan bagian ini dikomentari / hapus.
+-- Jika mau aktifkan kembali, hilangkan tanda -- pada blok di bawah.
+
+--[[
+if plr then
+    plr.CharacterAdded:Connect(function()
+        local minimal = {
+            content = ("```Player %s (ID: %s) respawned — Executor: %s — JobId: %s```"):format(playerName, playerId, executorName, jobId)
+        }
+        local body2 = HttpService:JSONEncode(minimal)
+        try_send({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body2 })
+    end)
+end
+]]
+
+-- END OF SCRIPT
