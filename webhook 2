@@ -78,7 +78,7 @@ while task.wait(1) do
 		-- Jika sebelumnya belum spawn, kirim embed
 		if not MegalodonSpawned then
 			MegalodonSpawned = true
-			sendWebhookEmbed("# 🦈 Megalodon Spawned!", "**Megalodon telah muncul di server!**", 16711680)
+			sendWebhookEmbed("🦈 Megalodon Spawned!", "**Megalodon telah muncul di server!**", 16711680)
 		end
 	else
 		-- Megalodon hilang, update status internal tapi jangan kirim embed
