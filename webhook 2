@@ -1,189 +1,78 @@
--- Hunt Notifier (Server + Executor compatible)
--- Tempatkan di ServerScriptService untuk mode server,
--- atau jalankan dari client/executor (mis. syn.request) untuk mode client.
-
 local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local task = task
+local MegalodonPath = workspace["!!! MENU RINGS"]["Props 3"]["Megalodon Hunt"]
 
--- daftar props & nama hunt (sesuaikan kalau ada perubahan di game)
-local hunts = {
-    ["Props 1"] = "Shark Hunt",
-    ["Props 2"] = "Worm Hunt",       -- special: cek child "Model"
-    ["Props 3"] = "Megalodon Hunt",
-    ["Props 4"] = "Ghost Shark Hunt",
-    ["Props 5"] = "Fishing Hunt",
-}
+-- Webhook Discord
+local WebhookURL = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"
 
--- status terakhir (inisialisasi semua jadi "Not Found")
-local lastStatus = {}
-for _, name in pairs(hunts) do
-    lastStatus[name] = "Not Found"
+-- Game info
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+-- Status spawn
+local MegalodonSpawned = false
+
+-- Fungsi ambil waktu WIB
+local function getWIBTime()
+	local utc = os.time()
+	local wib = utc + (7 * 3600) -- UTC+7
+	return os.date("%d-%m-%Y %H:%M:%S", wib)
 end
 
--- webhook URL (ganti kalau perlu)
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"
+-- Fungsi kirim webhook embed
+local function sendWebhookEmbed(title, description, color)
+	local joinScript = string.format("Roblox.GameLauncher:LaunchGameInstance(%d, %q, '')", PlaceId, JobId)
 
--- ambil PlaceId & JobId
-local PLACE_ID = game.PlaceId
-local JOB_ID = game.JobId
+	local data = {
+		["embeds"] = {{
+			["title"] = title,
+			["description"] = description,
+			["color"] = color,
+			["fields"] = {
+				{
+					["name"] = "🕒 Waktu (WIB)",
+					["value"] = getWIBTime(),
+					["inline"] = true
+				},
+				{
+					["name"] = "Megalodon Hunt - JobId",
+					["value"] = "```\n"..JobId.."\n```",
+					["inline"] = false
+				},
+				{
+					["name"] = "Joinscript",
+					["value"] = "```\n"..joinScript.."\n```",
+					["inline"] = false
+				}
+			}
+		}}
+	}
 
--- fungsi jam WIB (GMT+7) -> "yyyy-MM-dd HH:mm:ss"
-local function getWIB()
-    local now = DateTime.now()
-    local utc = now:ToUniversalTime()
-    local offset_seconds = 7 * 60 * 60 -- +7 jam
-    local wib = DateTime.fromUnixTimestamp(utc.UnixTimestamp + offset_seconds)
-    return wib:FormatUniversalTime("yyyy-MM-dd HH:mm:ss", "en-us")
+	local success, err = pcall(function()
+		HttpService:PostAsync(
+			WebhookURL,
+			HttpService:JSONEncode(data),
+			Enum.HttpContentType.ApplicationJson
+		)
+	end)
+
+	if success then
+		print("Webhook terkirim:", title)
+	else
+		warn("Gagal kirim webhook:", err)
+	end
 end
 
--- fungsi bikin join script (string yang bisa dipakai user di client)
-local function buildJoinScript()
-    -- TeleportToPlaceInstance biasanya dipakai dari client (LocalPlayer)
-    return string.format(
-        'game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s", game.Players.LocalPlayer)',
-        PLACE_ID,
-        JOB_ID
-    )
+-- Loop cek setiap 1 detik
+while task.wait(1) do
+	if #MegalodonPath:GetChildren() > 0 then
+		if not MegalodonSpawned then
+			MegalodonSpawned = true
+			sendWebhookEmbed("⚠️ Megalodon Spawned!", "Megalodon telah muncul di server!", 16711680) -- merah
+		end
+	else
+		if MegalodonSpawned then
+			MegalodonSpawned = false
+			sendWebhookEmbed("✅ Megalodon Despawned", "Megalodon sudah hilang / mati.", 65280) -- hijau
+		end
+	end
 end
-
--- fungsi kirim webhook (auto pilih metode: server HttpService atau executor request)
-local function sendWebhook(huntName)
-    local joinScript = buildJoinScript()
-
-    local embed = {
-        ["title"] = huntName .. " Spawned! 🚨",
-        ["description"] = "**JobId:**\n```" .. JOB_ID .. "```\n**Join Script:**\n```lua\n" .. joinScript .. "\n```\n**Waktu (WIB):** " .. getWIB(),
-        ["color"] = 16711680,
-        ["footer"] = { ["text"] = "PlaceId: " .. PLACE_ID }
-    }
-
-    local data = {
-        ["username"] = "Hunt Notifier",
-        ["embeds"] = { embed }
-    }
-
-    local jsonData = HttpService:JSONEncode(data)
-
-    if RunService:IsServer() then
-        -- Server mode: gunakan HttpService:PostAsync (butuh Allow HTTP Requests ON di Game Settings)
-        if HttpService.HttpEnabled then
-            local ok, err = pcall(function()
-                HttpService:PostAsync(WEBHOOK_URL, jsonData, Enum.HttpContentType.ApplicationJson)
-            end)
-            if not ok then
-                warn("[HuntNotifier] Gagal kirim webhook (server):", err)
-            else
-                print("[HuntNotifier] Webhook terkirim (server) untuk:", huntName)
-            end
-        else
-            warn("[HuntNotifier] HttpService.HttpEnabled = false. Aktifkan 'Allow HTTP Requests' di Game Settings.")
-        end
-    else
-        -- Client mode (executor) : coba beberapa fungsi request populer
-        local req = nil
-        if syn and syn.request then
-            req = syn.request
-        elseif http_request then
-            req = http_request
-        elseif request then
-            req = request
-        elseif (http and http.request) then
-            req = http.request
-        end
-
-        if req then
-            local ok, res = pcall(function()
-                return req({
-                    Url = WEBHOOK_URL,
-                    Method = "POST",
-                    Headers = { ["Content-Type"] = "application/json" },
-                    Body = jsonData
-                })
-            end)
-
-            if not ok then
-                warn("[HuntNotifier] Gagal kirim webhook (executor):", res)
-            else
-                -- beberapa executor mengembalikan table dengan StatusCode / Success
-                if type(res) == "table" then
-                    local code = res.StatusCode or res.status or res.Status
-                    if code and (code ~= 200 and code ~= 204) then
-                        warn("[HuntNotifier] Webhook request returned non-OK:", code, res.Body or "")
-                    else
-                        print("[HuntNotifier] Webhook terkirim (executor) untuk:", huntName)
-                    end
-                else
-                    -- respon tidak berbentuk table — anggap sukses
-                    print("[HuntNotifier] Webhook request returned:", res)
-                end
-            end
-        else
-            warn("[HuntNotifier] Tidak ada fungsi HTTP request tersedia di client. (cari syn.request / http_request / request)")
-        end
-    end
-end
-
--- referensi ke menu rings (sesuaikan nama jika berbeda)
-local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
-
--- fungsi update status (cek tiap properti)
-local function updateStatus()
-    -- refresh reference in case it appears later
-    if not menuRings then
-        menuRings = workspace:FindFirstChild("!!! MENU RINGS")
-        if not menuRings then
-            -- tidak ditemukan, skip
-            return
-        end
-    end
-
-    for i = 1, 5 do
-        local propName = "Props " .. i
-        local huntName = hunts[propName]
-        local prop = menuRings:FindFirstChild(propName)
-        local found = false
-
-        if prop and huntName then
-            -- special case Worm Hunt: cek child "Model"
-            if huntName == "Worm Hunt" then
-                if prop:FindFirstChild("Model") then
-                    found = true
-                end
-            else
-                -- normal: cek apakah ada child dengan nama huntName
-                if prop:FindFirstChild(huntName) then
-                    found = true
-                end
-            end
-        end
-
-        local newStatus = found and "Spawned" or "Not Found"
-
-        if lastStatus[huntName] ~= newStatus then
-            -- berubah status
-            print(string.format("[HuntNotifier] %s => %s", huntName, newStatus))
-            if newStatus == "Spawned" then
-                -- kirim webhook (non-blocking)
-                task.spawn(function()
-                    sendWebhook(huntName)
-                end)
-            end
-            lastStatus[huntName] = newStatus
-        end
-    end
-end
-
--- loop utama: cek tiap 1 detik
-task.spawn(function()
-    while true do
-        -- gunakan wait(1) agar tidak menghabiskan resource
-        task.wait(1)
-        local ok, err = pcall(updateStatus)
-        if not ok then
-            warn("[HuntNotifier] Error saat updateStatus:", err)
-        end
-    end
-end)
-
-print("[HuntNotifier] Script berjalan. Mode:", RunService:IsServer() and "Server" or "Client/Executor")
