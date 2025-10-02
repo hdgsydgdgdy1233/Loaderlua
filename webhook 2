@@ -24,7 +24,6 @@ local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.re
 
 -- Fungsi kirim webhook embed
 local function sendWebhookEmbed(title, description, color)
-	-- JoinScript pakai TeleportService
 	local joinScript = string.format(
 		"game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
 		PlaceId,
@@ -66,21 +65,25 @@ local function sendWebhookEmbed(title, description, color)
 			})
 		end)
 		if success then
-
 		else
-
 		end
 	else
-
 	end
 end
 
--- Loop cek setiap 1 detik (hanya kirim saat spawn)
+-- Loop cek setiap 1 detik
 while task.wait(1) do
-	if #MegalodonPath:GetChildren() > 0 then
+	local childrenCount = #MegalodonPath:GetChildren()
+	if childrenCount > 0 then
+		-- Jika sebelumnya belum spawn, kirim embed
 		if not MegalodonSpawned then
 			MegalodonSpawned = true
-			sendWebhookEmbed("# 🦈Megalodon Spawned!", "**Megalodon telah muncul di server!**", 16711680) -- merah
+			sendWebhookEmbed("# 🦈 Megalodon Spawned!", "**Megalodon telah muncul di server!**", 16711680)
+		end
+	else
+		-- Megalodon hilang, update status internal tapi jangan kirim embed
+		if MegalodonSpawned then
+			MegalodonSpawned = false
 		end
 	end
 end
