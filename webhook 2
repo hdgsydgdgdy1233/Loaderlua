@@ -18,6 +18,9 @@ local function getWIBTime()
 	return os.date("%d-%m-%Y %H:%M:%S", wib)
 end
 
+-- Support executor Roblox
+local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
+
 -- Fungsi kirim webhook embed
 local function sendWebhookEmbed(title, description, color)
 	local joinScript = string.format("Roblox.GameLauncher:LaunchGameInstance(%d, %q, '')", PlaceId, JobId)
@@ -47,18 +50,22 @@ local function sendWebhookEmbed(title, description, color)
 		}}
 	}
 
-	local success, err = pcall(function()
-		HttpService:PostAsync(
-			WebhookURL,
-			HttpService:JSONEncode(data),
-			Enum.HttpContentType.ApplicationJson
-		)
-	end)
-
-	if success then
-		print("Webhook terkirim:", title)
+	if Request then
+		local success, err = pcall(function()
+			Request({
+				Url = WebhookURL,
+				Method = "POST",
+				Headers = {["Content-Type"] = "application/json"},
+				Body = HttpService:JSONEncode(data)
+			})
+		end)
+		if success then
+			print("Webhook terkirim:", title)
+		else
+			warn("Gagal kirim webhook:", err)
+		end
 	else
-		warn("Gagal kirim webhook:", err)
+		warn("Executor tidak mendukung request.")
 	end
 end
 
