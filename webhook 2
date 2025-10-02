@@ -19,7 +19,7 @@ local lastStatus = {
 }
 
 -- webhook URL
-local WEBHOOK_URL = "https://discord.com/api/webhooks/xxxx/xxxx"
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"
 
 -- ambil PlaceId & JobId
 local PLACE_ID = game.PlaceId
