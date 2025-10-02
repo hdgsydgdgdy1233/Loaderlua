@@ -1,3 +1,4 @@
+-- Services
 local HttpService = game:GetService("HttpService")
 local MegalodonPath = workspace["!!! MENU RINGS"]["Props 3"]["Megalodon Hunt"]
 
@@ -23,7 +24,12 @@ local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.re
 
 -- Fungsi kirim webhook embed
 local function sendWebhookEmbed(title, description, color)
-	local joinScript = string.format("Roblox.GameLauncher:LaunchGameInstance(%d, %q, '')", PlaceId, JobId)
+	-- JoinScript pakai TeleportService
+	local joinScript = string.format(
+		"game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
+		PlaceId,
+		JobId
+	)
 
 	local data = {
 		["embeds"] = {{
@@ -32,7 +38,7 @@ local function sendWebhookEmbed(title, description, color)
 			["color"] = color,
 			["fields"] = {
 				{
-					["name"] = "🕒 Waktu (WIB)",
+					["name"] = "🕒 Time",
 					["value"] = getWIBTime(),
 					["inline"] = true
 				},
@@ -60,26 +66,21 @@ local function sendWebhookEmbed(title, description, color)
 			})
 		end)
 		if success then
-			print("Webhook terkirim:", title)
+
 		else
-			warn("Gagal kirim webhook:", err)
+
 		end
 	else
-		warn("Executor tidak mendukung request.")
+
 	end
 end
 
--- Loop cek setiap 1 detik
+-- Loop cek setiap 1 detik (hanya kirim saat spawn)
 while task.wait(1) do
 	if #MegalodonPath:GetChildren() > 0 then
 		if not MegalodonSpawned then
 			MegalodonSpawned = true
-			sendWebhookEmbed("⚠️ Megalodon Spawned!", "Megalodon telah muncul di server!", 16711680) -- merah
-		end
-	else
-		if MegalodonSpawned then
-			MegalodonSpawned = false
-			sendWebhookEmbed("✅ Megalodon Despawned", "Megalodon sudah hilang / mati.", 65280) -- hijau
+			sendWebhookEmbed("# 🦈Megalodon Spawned!", "**Megalodon telah muncul di server!**", 16711680) -- merah
 		end
 	end
 end
