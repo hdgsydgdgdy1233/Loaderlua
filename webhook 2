@@ -1,0 +1,111 @@
+local HttpService = game:GetService("HttpService")
+
+-- daftar props & nama hunt
+local hunts = {
+    ["Props 1"] = "Shark Hunt",
+    ["Props 2"] = "Model", -- Worm Hunt
+    ["Props 3"] = "Megalodon Hunt",
+    ["Props 4"] = "Ghost Shark Hunt",
+    ["Props 5"] = "Fishing Hunt",
+}
+
+-- status terakhir
+local lastStatus = {
+    ["Shark Hunt"] = "Not Found",
+    ["Worm Hunt"] = "Not Found",
+    ["Megalodon Hunt"] = "Not Found",
+    ["Ghost Shark Hunt"] = "Not Found",
+    ["Fishing Hunt"] = "Not Found",
+}
+
+-- webhook URL
+local WEBHOOK_URL = "https://discord.com/api/webhooks/xxxx/xxxx"
+
+-- ambil PlaceId & JobId
+local PLACE_ID = game.PlaceId
+local JOB_ID = game.JobId
+
+-- fungsi jam WIB
+local function getWIB()
+    local now = DateTime.now()
+    local utc = now:ToUniversalTime()
+    local offset = 7 * 60 * 60 -- WIB GMT+7
+    local wib = DateTime.fromUnixTimestamp(utc.UnixTimestamp + offset)
+    return wib:FormatUniversalTime("yyyy-MM-dd HH:mm:ss", "en-us")
+end
+
+-- fungsi kirim webhook
+local function sendWebhook(huntName)
+    local joinScript = string.format(
+        'game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s", game.Players.LocalPlayer)',
+        PLACE_ID,
+        JOB_ID
+    )
+
+    local data = {
+        ["username"] = "Hunt Notifier",
+        ["embeds"] = {{
+            ["title"] = huntName .. " Spawned! 🚨",
+            ["description"] = "**JobId:**\n```" .. JOB_ID .. "```\n**Join Script:**\n```lua\n" .. joinScript .. "\n```\n**Waktu (WIB):** " .. getWIB(),
+            ["color"] = 16711680,
+            ["footer"] = { ["text"] = "PlaceId: " .. PLACE_ID }
+        }}
+    }
+
+    local success, err = pcall(function()
+        HttpService:PostAsync(
+            WEBHOOK_URL,
+            HttpService:JSONEncode(data),
+            Enum.HttpContentType.ApplicationJson
+        )
+    end)
+
+    if not success then
+        warn("Gagal kirim webhook:", err)
+    end
+end
+
+-- referensi ke menu rings
+local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
+
+-- fungsi update status
+local function updateStatus()
+    if not menuRings then return end
+
+    for i = 1, 5 do
+        local propName = "Props " .. i
+        local huntName = hunts[propName]
+        local prop = menuRings:FindFirstChild(propName)
+        local found = false
+
+        if prop and huntName then
+            if prop:FindFirstChild(huntName) then
+                found = true
+            end
+        end
+
+        -- Worm Hunt khusus
+        if propName == "Props 2" then
+            if prop and prop:FindFirstChild("Model") then
+                found = true
+            end
+            huntName = "Worm Hunt"
+        end
+
+        local newStatus = found and "Spawned" or "Not Found"
+
+        if lastStatus[huntName] ~= newStatus then
+            if newStatus == "Spawned" then
+                sendWebhook(huntName)
+            end
+            lastStatus[huntName] = newStatus
+        end
+    end
+end
+
+-- auto update loop tiap 1 detik
+task.spawn(function()
+    while task.wait(1) do
+        updateStatus()
+    end
+end)
