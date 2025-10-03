@@ -1,362 +1,79 @@
 -- Services
 local HttpService = game:GetService("HttpService")
-local MegalodonPath = workspace["!!! MENU RINGS"]["Props 3"]["Megalodon Hunt"]
-
--- Webhook Discord
-local WebhookURL = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"
 
 -- Game info
 local PlaceId = game.PlaceId
 local JobId = game.JobId
 
--- Status spawn
-local MegalodonSpawned = false
-
--- Fungsi ambil waktu WIB
-local function getWIBTime()
-	local utc = os.time()
-	local wib = utc + (7 * 3600) -- UTC+7
-	return os.date("%d-%m-%Y %H:%M:%S", wib)
-end
-
 -- Support executor Roblox
 local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
 
--- Fungsi kirim webhook embed
-local function sendWebhookEmbed(title, description, color)
-	local joinScript = string.format(
-		"game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
-		PlaceId,
-		JobId
-	)
-
-	local data = {
-		["embeds"] = {{
-			["title"] = title,
-			["description"] = description,
-			["color"] = color,
-			["fields"] = {
-				{
-					["name"] = "🕒 Time",
-					["value"] = getWIBTime(),
-					["inline"] = true
-				},
-				{
-					["name"] = "Megalodon Hunt - JobId",
-					["value"] = "```\n"..JobId.."\n```",
-					["inline"] = false
-				},
-				{
-					["name"] = "Joinscript",
-					["value"] = "```\n"..joinScript.."\n```",
-					["inline"] = false
-				}
-			}
-		}}
-	}
-
-	if Request then
-		local success, err = pcall(function()
-			Request({
-				Url = WebhookURL,
-				Method = "POST",
-				Headers = {["Content-Type"] = "application/json"},
-				Body = HttpService:JSONEncode(data)
-			})
-		end)
-		if success then
-		else
-		end
-	else
-	end
-end
-
--- Loop cek setiap 1 detik
-while task.wait(1) do
-	local childrenCount = #MegalodonPath:GetChildren()
-	if childrenCount > 0 then
-		-- Jika sebelumnya belum spawn, kirim embed
-		if not MegalodonSpawned then
-			MegalodonSpawned = true
-			sendWebhookEmbed("🦈 Megalodon Hunt Spawned!", "**Megalodon telah muncul di server!**", 16711680)
-		end
-	else
-		-- Megalodon hilang, update status internal tapi jangan kirim embed
-		if MegalodonSpawned then
-			MegalodonSpawned = false
-		end
-	end
-end
-
--- Shark Hunt
--- Services
-local HttpService = game:GetService("HttpService")
-local MegalodonPath = workspace["!!! MENU RINGS"]["Props 1"]["Shark Hunt"]
-
--- Webhook Discord
-local WebhookURL = "https://discord.com/api/webhooks/1423664143562440724/9qZHqJFj7-yqouVGVjNtMTYvXJ8z3KsemY4Ed20R84K5leu9Ty5f6BfqvRSzCbaFj_eU"
-
--- Game info
-local PlaceId = game.PlaceId
-local JobId = game.JobId
-
--- Status spawn
-local MegalodonSpawned = false
-
 -- Fungsi ambil waktu WIB
 local function getWIBTime()
-	local utc = os.time()
-	local wib = utc + (7 * 3600) -- UTC+7
-	return os.date("%d-%m-%Y %H:%M:%S", wib)
+    local utc = os.time()
+    local wib = utc + (7 * 3600) -- UTC+7
+    return os.date("%d-%m-%Y %H:%M:%S", wib)
 end
 
--- Support executor Roblox
-local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
+-- Fungsi kirim webhook embed generik
+local function sendWebhookEmbed(title, description, color, webhook)
+    local joinScript = string.format(
+        "game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
+        PlaceId,
+        JobId
+    )
 
--- Fungsi kirim webhook embed
-local function sendWebhookEmbed(title, description, color)
-	local joinScript = string.format(
-		"game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
-		PlaceId,
-		JobId
-	)
+    local data = {
+        ["embeds"] = {{
+            ["title"] = title,
+            ["description"] = description,
+            ["color"] = color,
+            ["fields"] = {
+                {["name"]="🕒 Time", ["value"]=getWIBTime(), ["inline"]=true},
+                {["name"]="JobId", ["value"]="```\n"..JobId.."\n```", ["inline"]=false},
+                {["name"]="Joinscript", ["value"]="```\n"..joinScript.."\n```", ["inline"]=false}
+            }
+        }}
+    }
 
-	local data = {
-		["embeds"] = {{
-			["title"] = title,
-			["description"] = description,
-			["color"] = color,
-			["fields"] = {
-				{
-					["name"] = "🕒 Time",
-					["value"] = getWIBTime(),
-					["inline"] = true
-				},
-				{
-					["name"] = "Megalodon Hunt - JobId",
-					["value"] = "```\n"..JobId.."\n```",
-					["inline"] = false
-				},
-				{
-					["name"] = "Joinscript",
-					["value"] = "```\n"..joinScript.."\n```",
-					["inline"] = false
-				}
-			}
-		}}
-	}
-
-	if Request then
-		local success, err = pcall(function()
-			Request({
-				Url = WebhookURL,
-				Method = "POST",
-				Headers = {["Content-Type"] = "application/json"},
-				Body = HttpService:JSONEncode(data)
-			})
-		end)
-		if success then
-		else
-		end
-	else
-	end
+    if Request then
+        local success, err = pcall(function()
+            Request({
+                Url = webhook,
+                Method = "POST",
+                Headers = {["Content-Type"]="application/json"},
+                Body = HttpService:JSONEncode(data)
+            })
+        end)
+        if not success then
+            warn("Webhook Error:", err)
+        end
+    else
+        warn("No valid executor found for HTTP request!")
+    end
 end
 
--- Loop cek setiap 1 detik
-while task.wait(1) do
-	local childrenCount = #MegalodonPath:GetChildren()
-	if childrenCount > 0 then
-		-- Jika sebelumnya belum spawn, kirim embed
-		if not MegalodonSpawned then
-			MegalodonSpawned = true
-			sendWebhookEmbed("🦈 Shark Hunt Spawned!", "**Shark telah muncul di server!**", 16711680)
-		end
-	else
-		-- Megalodon hilang, update status internal tapi jangan kirim embed
-		if MegalodonSpawned then
-			MegalodonSpawned = false
-		end
-	end
-end
+-- Daftar Hunt
+local hunts = {
+    {name="Megalodon Hunt", path=workspace["!!! MENU RINGS"]["Props 3"]["Megalodon Hunt"], webhook="https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"},
+    {name="Shark Hunt", path=workspace["!!! MENU RINGS"]["Props 1"]["Shark Hunt"], webhook="https://discord.com/api/webhooks/1423664143562440724/9qZHqJFj7-yqouVGVjNtMTYvXJ8z3KsemY4Ed20R84K5leu9Ty5f6BfqvRSzCbaFj_eU"},
+    {name="Ghost Shark Hunt", path=workspace["!!! MENU RINGS"]["Props 4"]["Ghost Shark Hunt"], webhook="https://discord.com/api/webhooks/1423664256166920253/e0j0Usun1KnRDM8y_kY_Z6-q2Ln0FB3RGXVcFulIDo5PC7ojnyLBhhDJk6zSqHEq9M32"},
+    {name="Worm Hunt", path=workspace["!!! MENU RINGS"]["Props 2"]["Model"], webhook="https://discord.com/api/webhooks/1423664496689283164/Le9ZzZa36Z1xe8g3McXVtmpzpvBYpnw4TYxhlnAmCPg9GNPWIvHmZmUhrQ7V6WR7-Aou"}
+}
 
--- Ghost Shark Hunt
--- Services
-local HttpService = game:GetService("HttpService")
-local MegalodonPath = workspace["!!! MENU RINGS"]["Props 4"]["Ghost Shark Hunt"]
-
--- Webhook Discord
-local WebhookURL = "https://discord.com/api/webhooks/1423664256166920253/e0j0Usun1KnRDM8y_kY_Z6-q2Ln0FB3RGXVcFulIDo5PC7ojnyLBhhDJk6zSqHEq9M32"
-
--- Game info
-local PlaceId = game.PlaceId
-local JobId = game.JobId
-
--- Status spawn
-local MegalodonSpawned = false
-
--- Fungsi ambil waktu WIB
-local function getWIBTime()
-	local utc = os.time()
-	local wib = utc + (7 * 3600) -- UTC+7
-	return os.date("%d-%m-%Y %H:%M:%S", wib)
-end
-
--- Support executor Roblox
-local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
-
--- Fungsi kirim webhook embed
-local function sendWebhookEmbed(title, description, color)
-	local joinScript = string.format(
-		"game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
-		PlaceId,
-		JobId
-	)
-
-	local data = {
-		["embeds"] = {{
-			["title"] = title,
-			["description"] = description,
-			["color"] = color,
-			["fields"] = {
-				{
-					["name"] = "🕒 Time",
-					["value"] = getWIBTime(),
-					["inline"] = true
-				},
-				{
-					["name"] = "Megalodon Hunt - JobId",
-					["value"] = "```\n"..JobId.."\n```",
-					["inline"] = false
-				},
-				{
-					["name"] = "Joinscript",
-					["value"] = "```\n"..joinScript.."\n```",
-					["inline"] = false
-				}
-			}
-		}}
-	}
-
-	if Request then
-		local success, err = pcall(function()
-			Request({
-				Url = WebhookURL,
-				Method = "POST",
-				Headers = {["Content-Type"] = "application/json"},
-				Body = HttpService:JSONEncode(data)
-			})
-		end)
-		if success then
-		else
-		end
-	else
-	end
-end
-
--- Loop cek setiap 1 detik
-while task.wait(1) do
-	local childrenCount = #MegalodonPath:GetChildren()
-	if childrenCount > 0 then
-		-- Jika sebelumnya belum spawn, kirim embed
-		if not MegalodonSpawned then
-			MegalodonSpawned = true
-			sendWebhookEmbed("👻 Ghost Shark Hunt Spawned!", "**Ghost Shark telah muncul di server!**", 16711680)
-		end
-	else
-		-- Megalodon hilang, update status internal tapi jangan kirim embed
-		if MegalodonSpawned then
-			MegalodonSpawned = false
-		end
-	end
-end
-
--- Worm Hunt
--- Services
-local HttpService = game:GetService("HttpService")
-local MegalodonPath = workspace["!!! MENU RINGS"]["Props 2"]["Model"]
-
--- Webhook Discord
-local WebhookURL = "https://discord.com/api/webhooks/1423664496689283164/Le9ZzZa36Z1xe8g3McXVtmpzpvBYpnw4TYxhlnAmCPg9GNPWIvHmZmUhrQ7V6WR7-Aou"
-
--- Game info
-local PlaceId = game.PlaceId
-local JobId = game.JobId
-
--- Status spawn
-local MegalodonSpawned = false
-
--- Fungsi ambil waktu WIB
-local function getWIBTime()
-	local utc = os.time()
-	local wib = utc + (7 * 3600) -- UTC+7
-	return os.date("%d-%m-%Y %H:%M:%S", wib)
-end
-
--- Support executor Roblox
-local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
-
--- Fungsi kirim webhook embed
-local function sendWebhookEmbed(title, description, color)
-	local joinScript = string.format(
-		"game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
-		PlaceId,
-		JobId
-	)
-
-	local data = {
-		["embeds"] = {{
-			["title"] = title,
-			["description"] = description,
-			["color"] = color,
-			["fields"] = {
-				{
-					["name"] = "🕒 Time",
-					["value"] = getWIBTime(),
-					["inline"] = true
-				},
-				{
-					["name"] = "Megalodon Hunt - JobId",
-					["value"] = "```\n"..JobId.."\n```",
-					["inline"] = false
-				},
-				{
-					["name"] = "Joinscript",
-					["value"] = "```\n"..joinScript.."\n```",
-					["inline"] = false
-				}
-			}
-		}}
-	}
-
-	if Request then
-		local success, err = pcall(function()
-			Request({
-				Url = WebhookURL,
-				Method = "POST",
-				Headers = {["Content-Type"] = "application/json"},
-				Body = HttpService:JSONEncode(data)
-			})
-		end)
-		if success then
-		else
-		end
-	else
-	end
-end
-
--- Loop cek setiap 1 detik
-while task.wait(1) do
-	local childrenCount = #MegalodonPath:GetChildren()
-	if childrenCount > 0 then
-		-- Jika sebelumnya belum spawn, kirim embed
-		if not MegalodonSpawned then
-			MegalodonSpawned = true
-			sendWebhookEmbed("🪱 Worm Hunt Spawned!", "**Worm telah muncul di server!**", 16711680)
-		end
-	else
-		-- Megalodon hilang, update status internal tapi jangan kirim embed
-		if MegalodonSpawned then
-			MegalodonSpawned = false
-		end
-	end
+-- Loop untuk tiap hunt secara paralel
+for _, hunt in pairs(hunts) do
+    task.spawn(function()
+        local spawned = false
+        while task.wait(1) do
+            if #hunt.path:GetChildren() > 0 then
+                if not spawned then
+                    spawned = true
+                    sendWebhookEmbed(hunt.name.." Spawned!", "**"..hunt.name.." telah muncul di server!**", 16711680, hunt.webhook)
+                end
+            else
+                spawned = false
+            end
+        end
+    end)
 end
