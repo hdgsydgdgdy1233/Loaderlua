@@ -94,7 +94,7 @@ local HttpService = game:GetService("HttpService")
 local MegalodonPath = workspace["!!! MENU RINGS"]["Props 1"]["Shark Hunt"]
 
 -- Webhook Discord
-local WebhookURL = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"
+local WebhookURL = "https://discord.com/api/webhooks/1423664143562440724/9qZHqJFj7-yqouVGVjNtMTYvXJ8z3KsemY4Ed20R84K5leu9Ty5f6BfqvRSzCbaFj_eU"
 
 -- Game info
 local PlaceId = game.PlaceId
@@ -185,7 +185,7 @@ local HttpService = game:GetService("HttpService")
 local MegalodonPath = workspace["!!! MENU RINGS"]["Props 4"]["Ghost Shark Hunt"]
 
 -- Webhook Discord
-local WebhookURL = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"
+local WebhookURL = "https://discord.com/api/webhooks/1423664256166920253/e0j0Usun1KnRDM8y_kY_Z6-q2Ln0FB3RGXVcFulIDo5PC7ojnyLBhhDJk6zSqHEq9M32"
 
 -- Game info
 local PlaceId = game.PlaceId
