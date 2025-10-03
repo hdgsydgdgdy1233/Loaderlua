@@ -1,0 +1,15 @@
+-- LocalScript
+local player = game.Players.LocalPlayer
+
+-- Table UserId dan pesan kick masing-masing
+local kickList = {
+    [8800714003] = "Jaga Bahasa Anda",
+}
+
+-- Cek apakah LocalPlayer ada di list
+if player then
+    local message = kickList[player.UserId]
+    if message then
+        player:Kick(message)
+    end
+end
