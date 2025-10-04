@@ -20,33 +20,33 @@ local Targets = {
 	-- 1️⃣ Props 1
 	{
 		Name = "Shark Hunt",
-		Path = workspace["!!! MENU RINGS"]["Props 1"]["Shark Hunt"],
+		Path = { "Props 1", "Shark Hunt" },
 		Webhook = "https://discord.com/api/webhooks/1423664143562440724/9qZHqJFj7-yqouVGVjNtMTYvXJ8z3KsemY4Ed20R84K5leu9Ty5f6BfqvRSzCbaFj_eU",
-		Color = 65280, -- hijau
+		Color = 65280,
 		Emoji = "🌊"
 	},
-	-- 2️⃣ Props 2
+	-- 2️⃣ Props 2 (Worm)
 	{
 		Name = "Worm Hunt",
-		Path = workspace["!!! MENU RINGS"]["Props 2"].Model,
+		Path = { "Props 2", "Model" },
 		Webhook = "https://discord.com/api/webhooks/1423664496689283164/Le9ZzZa36Z1xe8g3McXVtmpzpvBYpnw4TYxhlnAmCPg9GNPWIvHmZmUhrQ7V6WR7-Aou",
-		Color = 255, -- biru muda
+		Color = 255,
 		Emoji = "🪱"
 	},
-	-- 3️⃣ Props 3
+	-- 3️⃣ Props 3 (Megalodon)
 	{
 		Name = "Megalodon Hunt",
-		Path = workspace["!!! MENU RINGS"]["Props 3"]["Megalodon Hunt"],
+		Path = { "Props 3", "Megalodon Hunt" },
 		Webhook = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l",
-		Color = 16711680, -- merah
+		Color = 16711680,
 		Emoji = "🦈"
 	},
-	-- 4️⃣ Props 4
+	-- 4️⃣ Props 4 (Ghost Shark)
 	{
 		Name = "Ghost Shark Hunt",
-		Path = workspace["!!! MENU RINGS"]["Props 4"]["Ghost Shark Hunt"],
+		Path = { "Props 4", "Ghost Shark Hunt" },
 		Webhook = "https://discord.com/api/webhooks/1423664256166920253/e0j0Usun1KnRDM8y_kY_Z6-q2Ln0FB3RGXVcFulIDo5PC7ojnyLBhhDJk6zSqHEq9M32",
-		Color = 10027263, -- ungu lembut
+		Color = 10027263,
 		Emoji = "👻"
 	}
 }
@@ -84,9 +84,7 @@ local function sendWebhook(target)
 					["inline"] = false
 				}
 			},
-			["footer"] = {
-				["text"] = "Auto Hunt Detector • Made by HDragons"
-			}
+			["footer"] = { ["text"] = "Auto Hunt Detector • Made by HDragons" }
 		} }
 	}
 
@@ -102,14 +100,26 @@ local function sendWebhook(target)
 	print(string.format("[%s] %s Spawned! (%s)", getWIBTime(), target.Name, JobId))
 end
 
+--// Fungsi ambil path aman
+local function getPathSafe(pathTable)
+	local current = workspace["!!! MENU RINGS"]
+	for _, name in ipairs(pathTable) do
+		if current:FindFirstChild(name) then
+			current = current[name]
+		else
+			return nil
+		end
+	end
+	return current
+end
+
 --// Loop utama
 while task.wait(1) do
 	for _, target in ipairs(Targets) do
-		local success, childrenCount = pcall(function()
-			return #target.Path:GetChildren()
-		end)
+		local object = getPathSafe(target.Path)
 
-		if success then
+		if object then
+			local childrenCount = #object:GetChildren()
 			if childrenCount > 0 then
 				if not SpawnStatus[target.Name] then
 					SpawnStatus[target.Name] = true
