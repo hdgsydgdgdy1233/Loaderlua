@@ -84,7 +84,7 @@ local function sendWebhook(target)
 					["inline"] = false
 				}
 			},
-			["footer"] = { ["text"] = "Auto Hunt Detector • Made by HDragons" }
+			["footer"] = { ["text"] = "Auto Hunt Detector • Made by Nexa" }
 		} }
 	}
 
