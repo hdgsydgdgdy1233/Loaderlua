@@ -1,79 +1,125 @@
--- Services
+--// Services
 local HttpService = game:GetService("HttpService")
 
--- Game info
+--// Game Info
 local PlaceId = game.PlaceId
 local JobId = game.JobId
 
--- Support executor Roblox
+--// Fungsi ambil waktu WIB
+local function getWIBTime()
+	local utc = os.time()
+	local wib = utc + (7 * 3600)
+	return os.date("%d-%m-%Y %H:%M:%S", wib)
+end
+
+--// Support executor Roblox
 local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
 
--- Fungsi ambil waktu WIB
-local function getWIBTime()
-    local utc = os.time()
-    local wib = utc + (7 * 3600) -- UTC+7
-    return os.date("%d-%m-%Y %H:%M:%S", wib)
-end
-
--- Fungsi kirim webhook embed generik
-local function sendWebhookEmbed(title, description, color, webhook)
-    local joinScript = string.format(
-        "game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
-        PlaceId,
-        JobId
-    )
-
-    local data = {
-        ["embeds"] = {{
-            ["title"] = title,
-            ["description"] = description,
-            ["color"] = color,
-            ["fields"] = {
-                {["name"]="🕒 Time", ["value"]=getWIBTime(), ["inline"]=true},
-                {["name"]="JobId", ["value"]="```\n"..JobId.."\n```", ["inline"]=false},
-                {["name"]="Joinscript", ["value"]="```\n"..joinScript.."\n```", ["inline"]=false}
-            }
-        }}
-    }
-
-    if Request then
-        local success, err = pcall(function()
-            Request({
-                Url = webhook,
-                Method = "POST",
-                Headers = {["Content-Type"]="application/json"},
-                Body = HttpService:JSONEncode(data)
-            })
-        end)
-        if not success then
-            warn("Webhook Error:", err)
-        end
-    else
-        warn("No valid executor found for HTTP request!")
-    end
-end
-
--- Daftar Hunt
-local hunts = {
-    {name="Megalodon Hunt", path=workspace["!!! MENU RINGS"]["Props 3"]["Megalodon Hunt"], webhook="https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l"},
-    {name="Shark Hunt", path=workspace["!!! MENU RINGS"]["Props 1"]["Shark Hunt"], webhook="https://discord.com/api/webhooks/1423664143562440724/9qZHqJFj7-yqouVGVjNtMTYvXJ8z3KsemY4Ed20R84K5leu9Ty5f6BfqvRSzCbaFj_eU"},
-    {name="Ghost Shark Hunt", path=workspace["!!! MENU RINGS"]["Props 4"]["Ghost Shark Hunt"], webhook="https://discord.com/api/webhooks/1423664256166920253/e0j0Usun1KnRDM8y_kY_Z6-q2Ln0FB3RGXVcFulIDo5PC7ojnyLBhhDJk6zSqHEq9M32"},
-    {name="Worm Hunt", path=workspace["!!! MENU RINGS"]["Props 2"]["Model"], webhook="https://discord.com/api/webhooks/1423664496689283164/Le9ZzZa36Z1xe8g3McXVtmpzpvBYpnw4TYxhlnAmCPg9GNPWIvHmZmUhrQ7V6WR7-Aou"}
+--// Data lokasi dan Webhook
+local Targets = {
+	-- 1️⃣ Props 1
+	{
+		Name = "Shark Hunt",
+		Path = workspace["!!! MENU RINGS"]["Props 1"]["Shark Hunt"],
+		Webhook = "https://discord.com/api/webhooks/1423664143562440724/9qZHqJFj7-yqouVGVjNtMTYvXJ8z3KsemY4Ed20R84K5leu9Ty5f6BfqvRSzCbaFj_eU",
+		Color = 65280, -- hijau
+		Emoji = "🌊"
+	},
+	-- 2️⃣ Props 2
+	{
+		Name = "Worm Hunt",
+		Path = workspace["!!! MENU RINGS"]["Props 2"].Model,
+		Webhook = "https://discord.com/api/webhooks/1423664496689283164/Le9ZzZa36Z1xe8g3McXVtmpzpvBYpnw4TYxhlnAmCPg9GNPWIvHmZmUhrQ7V6WR7-Aou",
+		Color = 255, -- biru muda
+		Emoji = "🪱"
+	},
+	-- 3️⃣ Props 3
+	{
+		Name = "Megalodon Hunt",
+		Path = workspace["!!! MENU RINGS"]["Props 3"]["Megalodon Hunt"],
+		Webhook = "https://discord.com/api/webhooks/1423231896959057984/JaJkw89NfOVPHaRcEAlGiTaDrwwb6326CWvl6A87mM8xuECcAgXmS24y0RZsECOe9d6l",
+		Color = 16711680, -- merah
+		Emoji = "🦈"
+	},
+	-- 4️⃣ Props 4
+	{
+		Name = "Ghost Shark Hunt",
+		Path = workspace["!!! MENU RINGS"]["Props 4"]["Ghost Shark Hunt"],
+		Webhook = "https://discord.com/api/webhooks/1423664256166920253/e0j0Usun1KnRDM8y_kY_Z6-q2Ln0FB3RGXVcFulIDo5PC7ojnyLBhhDJk6zSqHEq9M32",
+		Color = 10027263, -- ungu lembut
+		Emoji = "👻"
+	}
 }
 
--- Loop untuk tiap hunt secara paralel
-for _, hunt in pairs(hunts) do
-    task.spawn(function()
-        local spawned = false
-        while task.wait(1) do
-            if #hunt.path:GetChildren() > 0 then
-                if not spawned then
-                    spawned = true
-                    sendWebhookEmbed(hunt.name.." Spawned!", "**"..hunt.name.." telah muncul di server!**", 16711680, hunt.webhook)
-                end
-            else
-                spawned = false
-            end
-        end
-    end)
+--// Status spawn masing-masing
+local SpawnStatus = {}
+
+--// Fungsi kirim webhook embed
+local function sendWebhook(target)
+	local joinScript = string.format(
+		"game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)",
+		PlaceId,
+		JobId
+	)
+
+	local data = {
+		["embeds"] = { {
+			["title"] = target.Emoji .. " " .. target.Name .. " Spawned!",
+			["description"] = "**" .. target.Name .. " telah muncul di server!**",
+			["color"] = target.Color,
+			["fields"] = {
+				{
+					["name"] = "🕒 Time",
+					["value"] = getWIBTime(),
+					["inline"] = true
+				},
+				{
+					["name"] = target.Name .. " - JobId",
+					["value"] = "```\n" .. JobId .. "\n```",
+					["inline"] = false
+				},
+				{
+					["name"] = "Joinscript",
+					["value"] = "```\n" .. joinScript .. "\n```",
+					["inline"] = false
+				}
+			},
+			["footer"] = {
+				["text"] = "Auto Hunt Detector • Made by HDragons"
+			}
+		} }
+	}
+
+	pcall(function()
+		Request({
+			Url = target.Webhook,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = HttpService:JSONEncode(data)
+		})
+	end)
+
+	print(string.format("[%s] %s Spawned! (%s)", getWIBTime(), target.Name, JobId))
+end
+
+--// Loop utama
+while task.wait(1) do
+	for _, target in ipairs(Targets) do
+		local success, childrenCount = pcall(function()
+			return #target.Path:GetChildren()
+		end)
+
+		if success then
+			if childrenCount > 0 then
+				if not SpawnStatus[target.Name] then
+					SpawnStatus[target.Name] = true
+					sendWebhook(target)
+				end
+			else
+				if SpawnStatus[target.Name] then
+					SpawnStatus[target.Name] = false
+				end
+			end
+		end
+	end
 end
