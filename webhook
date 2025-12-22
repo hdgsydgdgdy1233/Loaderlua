@@ -66,7 +66,7 @@ local embed = {
     color = 0x5865F2,
     author = {
         name = "NexaHub Logger",
-        icon_url = "https://i.imgur.com/AfFp7pu.png"
+        icon_url = "https://i.imgur.com/NYMZpC7.jpeg"
     },
     fields = {
         {
