@@ -94,7 +94,7 @@ local embed = {
     },
     footer = {
         text = "NexaHub • Secure Execution Logger",
-        icon_url = "https://i.imgur.com/AfFp7pu.png"
+        icon_url = "https://i.imgur.com/NYMZpC7.jpeg"
     },
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 }
