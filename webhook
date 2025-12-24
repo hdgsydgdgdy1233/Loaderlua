@@ -133,6 +133,4 @@ else
     warn("Failed to send webhook:", res)
 end
 
---// END SCRIPT
-
-tamabhin image profil palyer
+--// END SCRIP
